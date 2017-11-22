@@ -1,0 +1,14 @@
+# io.sh
+# Template for conventional usage
+# The following variables are set in getio() function.
+# They are read from the command line, the script caller.
+# Some examples:
+$ ./script.sh -h --help -a --all
+OPTS=( '-h' '-a' )
+OPTS_EXT=( '--help' '--all' )
+
+
+
+	Usage:
+		
+
