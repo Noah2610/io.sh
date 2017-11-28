@@ -7,6 +7,13 @@
 ###
 ########################################
 
+##################################### TODO #####################################
+### Fix storing of values/arguments given to options that take arguments     ###
+### Maybe create object-like storing system ->                               ###
+### object=(key1 val1 key2 val2 key3 val3 ...)                               ###
+################################################################################
+
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}"  )" && pwd )"
 USAGE=$( cat "${DIR}/doc" )
 
@@ -22,8 +29,8 @@ ARGS_KEYWORDS=()       # ex: status enable
 
 
 ### Your defined arguments; Arguments that can be used:
-OPTS=(v)
-OPTS_EXT=(version config)
+OPTS=()
+OPTS_EXT=()
 KEYWORDS=()
 
 # Add help options to option arrays
@@ -31,8 +38,8 @@ OPTS+=("${HELP}")
 OPTS_EXT+=("${HELP_EXT}")
 
 ### If option at perspective position takes a value [yes/no]:
-HASVAL=(no)
-HASVAL_EXT=(no yes)
+HASVAL=()
+HASVAL_EXT=()
 HASVAL_KEYWORD=()
 
 ### Values given by user from command line to options that accept values:
@@ -86,7 +93,7 @@ function getio {
 			fi
 		elif [[ "$arg" =~ ^[[:alnum:]]+$ ]]; then
 			if [[ " ${KEYWORDS[@]} " =~ " ${arg} " ]]; then
-				KEYWORDS+=("${arg}")
+				ARGS_KEYWORDS+=("${arg}")
 				if [[ ${HASVAL_KEYWORD[$count_keyword]} == yes ]]; then
 					VALS_KEYWORD+=("${args[$count+1]}")
 					SKIP=true
@@ -104,7 +111,7 @@ function getio {
 	ARGS_ALL_OPTS=($( echo "${ARGS_OPTS} ${ARGS_OPTS_EXT}" ))
 
 	### Print usage / help_text and exit
-	if [[ " ${ARGS_OPTS[@]} " =~ " ${HELP} " || " ${ARGS_OPTS_EXT[@]} " =~ " ${HELP_EXT} " || ${#unrecognized[@]} == 0 ]]; then
+	if [[ " ${ARGS_OPTS[@]} " =~ " ${HELP} " || " ${ARGS_OPTS_EXT[@]} " =~ " ${HELP_EXT} " || ${#unrecognized[@]} > 0 ]]; then
 		for unrec in ${unrecognized[@]}; do
 			str="Option or keyword"
 			if [[ "${unrec:0:2}" == "--" ]]; then   str="Extended option"
@@ -132,7 +139,6 @@ function has_x? {
 			return
 		fi
 	done
-	echo -n "false"
 
 }
 
@@ -146,12 +152,12 @@ function has_keyword? {
 
 
 ### Get options and keywords from command line, fill variables above
-getio $@
+## getio $@
 
-echo OPTS: ${ARGS_OPTS[@]}
-echo VALS: ${VALS[@]}
-echo OPTS_EXT: ${ARGS_OPTS_EXT[@]}
-echo VALS_EXT: ${VALS_EXT[@]}
-echo KW: ${ARGS_KEYWORDS[@]}
-echo VALS_KW: ${VALS_KEYWORD[@]}
+## echo OPTS: ${ARGS_OPTS[@]}
+## echo VALS: ${VALS[@]}
+## echo OPTS_EXT: ${ARGS_OPTS_EXT[@]}
+## echo VALS_EXT: ${VALS_EXT[@]}
+## echo KW: ${ARGS_KEYWORDS[@]}
+## echo VALS_KW: ${VALS_KEYWORD[@]}
 
