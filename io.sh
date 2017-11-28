@@ -13,12 +13,6 @@ USAGE=$( cat "${DIR}/doc" )
 HELP="h"          # -h
 HELP_EXT="help"   # --help
 
-### Your defined arguments; Arguments that can be used:
-# WIP TODO
-OPTS=()
-OPTS_EXT=()
-ALL_OPTS=()
-KEYWORDS=()
 
 ### Following are arguments from command line:
 ARGS_OPTS=()           # ex: -v -a
@@ -27,25 +21,98 @@ ARGS_ALL_OPTS=()       # $ARGS_OPTS and $ARGS_OPTS_EXT
 ARGS_KEYWORDS=()       # ex: status enable
 
 
+### Your defined arguments; Arguments that can be used:
+OPTS=(v)
+OPTS_EXT=(version config)
+KEYWORDS=()
+
+# Add help options to option arrays
+OPTS+=("${HELP}")
+OPTS_EXT+=("${HELP_EXT}")
+
+### If option at perspective position takes a value [yes/no]:
+HASVAL=(no)
+HASVAL_EXT=(no yes)
+HASVAL_KEYWORD=()
+
+### Values given by user from command line to options that accept values:
+VALS=()
+VALS_EXT=()
+VALS_KEYWORD=()
+
+
 function getio {
 
-	for arg in $@; do
-		if [[ $arg =~ ^-[[:alnum:]]+$ ]]; then
+	args=($@)
+	SKIP=false
+	count_opt=0
+	count_opt_ext=0
+	count_keyword=0
+	unrecognized=()
+	# for arg in $@; do
+	for (( count=0; count < ${#args[@]}; count++ )); do
+		if [[ $SKIP == true ]]; then
+			SKIP=false
+			continue
+		fi
+		arg="${args[$count]}"
+		if [[ "$arg" =~ ^-[[:alnum:]]+$ ]]; then
 			for (( i=1; i < ${#arg}; i++ )); do
-				ARGS_OPTS+=("${arg:$i:1}")
+				if [[ " ${OPTS[@]} " =~ " ${arg:$i:1} " ]]; then
+					ARGS_OPTS+=("${arg:$i:1}")
+					if [[ ${HASVAL[$count_opt]} == yes ]]; then
+						VALS+=("${args[$count+1]}")
+						SKIP=true
+					else
+						VALS+=(NIL)
+					fi
+					((count_opt++))
+				else  # option not recognized, not valid option
+					unrecognized+=("-${arg:$i:1}")
+				fi
 			done
 		elif [[ "$arg" =~ ^--[[:alnum:]][[:alnum:]]+$ ]]; then
-			ARGS_OPTS_EXT+=("${arg:2}")
+			if [[ " ${OPTS_EXT[@]} " =~ " ${arg:2} " ]]; then
+				ARGS_OPTS_EXT+=("${arg:2}")
+				if [[ ${HASVAL_EXT[$count_opt_ext]} == yes ]]; then
+					VALS_EXT+=("${args[$count+1]}")
+					SKIP=true
+				else
+					VALS_EXT+=(NIL)
+				fi
+				((count_opt_ext++))
+			else  # option not recognized, not valid option
+				unrecognized+=("--${arg:2}")
+			fi
 		elif [[ "$arg" =~ ^[[:alnum:]]+$ ]]; then
-			ARGS_KEYWORDS+=("$arg")
+			if [[ " ${KEYWORDS[@]} " =~ " ${arg} " ]]; then
+				KEYWORDS+=("${arg}")
+				if [[ ${HASVAL_KEYWORD[$count_keyword]} == yes ]]; then
+					VALS_KEYWORD+=("${args[$count+1]}")
+					SKIP=true
+				else
+					VALS_KEYWORD+=(NIL)
+				fi
+				((count_keyword++))
+			else  # option not recognized, not valid option
+				unrecognized+=("$arg")
+			fi
 		fi
 	done
 
-	### ARGS_ALL_OPTS
+	### All options
 	ARGS_ALL_OPTS=($( echo "${ARGS_OPTS} ${ARGS_OPTS_EXT}" ))
 
 	### Print usage / help_text and exit
-	if [[ " ${ARGS_OPTS[@]} " =~ " ${HELP} " || " ${ARGS_OPTS_EXT[@]} " =~ " ${HELP_EXT} " ]]; then
+	if [[ " ${ARGS_OPTS[@]} " =~ " ${HELP} " || " ${ARGS_OPTS_EXT[@]} " =~ " ${HELP_EXT} " || ${#unrecognized[@]} == 0 ]]; then
+		for unrec in ${unrecognized[@]}; do
+			str="Option or keyword"
+			if [[ "${unrec:0:2}" == "--" ]]; then   str="Extended option"
+			elif [[ "${unrec:0:1}" == "-" ]]; then  str="Option"
+			else                                    str="Keyword"
+			fi
+			echo "${str} not recognized: '${unrec}'"
+		done
 		echo "$USAGE"
 		exit
 	fi
@@ -81,24 +148,10 @@ function has_keyword? {
 ### Get options and keywords from command line, fill variables above
 getio $@
 
-### Check if -a or --test were given
-## return "true"  if any option WASN'T given
-## return "false" if any option  WAS   given
-# has_opt? a test
-
-#echo "KWS: ${ARGS_KEYWORDS[@]}"
-#echo "ARGS_OPTS: ${ARGS_OPTS[@]}"
-#echo "ARGS_OPTS_EXT: ${ARGS_OPTS_EXT[@]}"
-
-#if [[ "$( has_opt? verbose )" =~ "true" ]]; then
-#	echo "OPT"
-#fi
-#
-#if [[ "$( has_keyword? status )" =~ "true" ]]; then
-#	echo "KEYWORD"
-#else
-#	echo "NO KW"
-#fi
-
-#case $( has_opt ) in
+echo OPTS: ${ARGS_OPTS[@]}
+echo VALS: ${VALS[@]}
+echo OPTS_EXT: ${ARGS_OPTS_EXT[@]}
+echo VALS_EXT: ${VALS_EXT[@]}
+echo KW: ${ARGS_KEYWORDS[@]}
+echo VALS_KW: ${VALS_KEYWORD[@]}
 
